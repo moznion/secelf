@@ -65,7 +65,7 @@ func Run(args []string) {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/files", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/files", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
@@ -100,7 +100,7 @@ func Run(args []string) {
 		w.Write([]byte("ok"))
 	})
 
-	r.HandleFunc("/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
@@ -127,7 +127,7 @@ func Run(args []string) {
 		w.Write(content)
 	})
 
-	r.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/search", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
