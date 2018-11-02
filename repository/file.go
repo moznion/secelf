@@ -45,40 +45,56 @@ func (repo *FileRepository) Put(fileName string) (int64, error) {
 	return id, nil
 }
 
-type SearchingResult struct {
+type FileRow struct {
 	ID       int64
 	FileName string
 }
 
-func (repo *FileRepository) Search(q string) ([]*SearchingResult, error) {
+func (repo *FileRepository) Single(id int64) (*FileRow, error) {
 	db, err := sql.Open("sqlite3", repo.dbPath)
 	if err != nil {
-		return []*SearchingResult{&SearchingResult{
-			ID:       -1,
-			FileName: "",
-		}}, err
+		return nil, err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare(fmt.Sprintf("SELECT file_name FROM %s WHERE id = ?", fileTableName))
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	var fileName string
+	err = stmt.QueryRow(id).Scan(&fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &FileRow{
+		ID:       id,
+		FileName: fileName,
+	}, nil
+}
+
+func (repo *FileRepository) Search(q string) ([]*FileRow, error) {
+	db, err := sql.Open("sqlite3", repo.dbPath)
+	if err != nil {
+		return []*FileRow{}, err
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare(fmt.Sprintf("SELECT id, file_name FROM %s WHERE file_name LIKE ? ORDER BY id DESC", fileTableName))
 	if err != nil {
-		return []*SearchingResult{&SearchingResult{
-			ID:       -1,
-			FileName: "",
-		}}, err
+		return []*FileRow{}, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query("%" + q + "%")
 	if err != nil {
-		return []*SearchingResult{&SearchingResult{
-			ID:       -1,
-			FileName: "",
-		}}, err
+		return []*FileRow{}, err
 	}
 	defer rows.Close()
 
-	results := make([]*SearchingResult, 0)
+	results := make([]*FileRow, 0)
 	for rows.Next() {
 		var id int64
 		var fileName string
@@ -86,7 +102,7 @@ func (repo *FileRepository) Search(q string) ([]*SearchingResult, error) {
 		if err != nil {
 			continue
 		}
-		results = append(results, &SearchingResult{
+		results = append(results, &FileRow{
 			ID:       id,
 			FileName: fileName,
 		})
