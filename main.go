@@ -6,7 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/moznion/secelf/drive"
 	"github.com/moznion/secelf/repository"
 )
@@ -57,8 +60,11 @@ func Run(args []string) {
 	fileRepo := repository.NewFileRepository(dbPath)
 
 	register := NewRegistrar(enc, fileRepo, driveService)
+	retriever := NewRetriever(enc, fileRepo, driveService)
 
-	http.HandleFunc("/item", func(w http.ResponseWriter, r *http.Request) {
+	r := mux.NewRouter()
+
+	r.HandleFunc("/file", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
@@ -89,9 +95,43 @@ func Run(args []string) {
 			return
 		}
 
-		w.WriteHeader(200)
+		w.WriteHeader(201)
 		w.Write([]byte("ok"))
 	})
 
-	http.ListenAndServe(":29292", nil) // TODO port
+	r.HandleFunc("/file/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.WriteHeader(405)
+			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		vars := mux.Vars(r)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte("bad request"))
+			return
+		}
+
+		content, err := retriever.Retrieve(id, rootDir)
+		if err != nil {
+			log.Printf("[ERROR] %s", err)
+			w.WriteHeader(500)
+			w.Write([]byte("internal server error"))
+			return
+		}
+
+		w.WriteHeader(200)
+		w.Write(content)
+	})
+
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         "127.0.0.1:29292",
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	log.Fatal(srv.ListenAndServe())
 }
