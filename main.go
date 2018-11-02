@@ -2,6 +2,7 @@ package secelf
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -64,7 +65,7 @@ func Run(args []string) {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/file", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/files", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
@@ -99,7 +100,7 @@ func Run(args []string) {
 		w.Write([]byte("ok"))
 	})
 
-	r.HandleFunc("/file/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
@@ -124,6 +125,28 @@ func Run(args []string) {
 
 		w.WriteHeader(200)
 		w.Write(content)
+	})
+
+	r.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.WriteHeader(405)
+			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		q := r.URL.Query().Get("q")
+		records, err := fileRepo.Search(q)
+		if err != nil {
+			log.Printf("[ERROR] %s", err)
+			w.WriteHeader(500)
+			w.Write([]byte("internal server error"))
+			return
+		}
+
+		result, _ := json.Marshal(records)
+
+		w.WriteHeader(200)
+		w.Write(result)
 	})
 
 	srv := &http.Server{
