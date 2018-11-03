@@ -11,13 +11,13 @@
   "dependencies": {
     "bootstrap": "^4.0.0-beta.2",
     "bootstrap-vue": "^2.0.0-rc.11",
+    "jquery": "^3.3.1",
     "popper.js": "^1.12.9",
     "vue": "^2.5.17"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^6.0.0",
-    "babel-preset-env": "^1.6.1",
+    "ajv": "^6.5.4",
+    "ajv-keywords": "^3.2.0",
     "cross-env": "^5.1.1",
     "css-loader": "^1.0.1",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
