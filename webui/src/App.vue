@@ -1,8 +1,18 @@
 <template>
   <div id="app">
     <h1>SECELF</h1>
-    <button class="btn" v-on:click="foo">Reverse Message</button>
-{{msg}}
+
+    <form action="/api/files" method="POST" enctype="multipart/form-data">
+      <div class="input-group">
+        <div class="custom-file">
+          <input type="file" class="custom-file-input" id="file">
+          <label class="custom-file-label" for="file">Choose file</label>
+        </div>
+        <div class="input-group-append">
+          <button class="btn btn-primary" type="submit">Upload</button>
+        </div>
+      </div>
+    </form>
   </div>
 </template>
 
