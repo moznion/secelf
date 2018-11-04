@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <h1>SECELF</h1>
-    <button v-on:click="foo">Reverse Message</button>
+    <button class="btn" v-on:click="foo">Reverse Message</button>
 {{msg}}
   </div>
 </template>
@@ -9,17 +9,17 @@
 <script>
 export default {
   name: 'app',
-  data () {
+  data() {
     return {
-      msg: 'Welcome to Your Vue.js App'
-    }
+      msg: 'Welcome to Your Vue.js App',
+    };
   },
   methods: {
     foo: function() {
       this.msg = 'hih';
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style lang="scss">
@@ -30,7 +30,8 @@ export default {
   margin-top: 10px;
 }
 
-h1, h2 {
+h1,
+h2 {
   font-weight: normal;
 }
 
