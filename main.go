@@ -3,6 +3,7 @@ package secelf
 import (
 	"bytes"
 	"encoding/json"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -65,6 +66,53 @@ func Run(args []string) {
 
 	r := mux.NewRouter()
 
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.WriteHeader(405)
+			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		tmpl := template.Must(template.ParseFiles("./webui/index.html"))
+		if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
+			log.Printf("[ERROR] %s", err)
+			w.WriteHeader(500)
+			w.Write([]byte("internal server error"))
+			return
+		}
+	})
+
+	r.HandleFunc("/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.WriteHeader(405)
+			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		vars := mux.Vars(r)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte("bad request"))
+			return
+		}
+
+		content, err := retriever.Retrieve(id, rootDir)
+		if err != nil {
+			log.Printf("[ERROR] %s", err)
+			w.WriteHeader(500)
+			w.Write([]byte("internal server error"))
+			return
+		}
+
+		w.WriteHeader(200)
+		w.Write(content)
+	})
+
+	r.HandleFunc("/webui/dist/{file}", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
+
 	r.HandleFunc("/api/files", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)
@@ -98,33 +146,6 @@ func Run(args []string) {
 
 		w.WriteHeader(201)
 		w.Write([]byte("ok"))
-	})
-
-	r.HandleFunc("/api/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			w.WriteHeader(405)
-			w.Write([]byte("method not allowed"))
-			return
-		}
-
-		vars := mux.Vars(r)
-		id, err := strconv.ParseInt(vars["id"], 10, 64)
-		if err != nil {
-			w.WriteHeader(400)
-			w.Write([]byte("bad request"))
-			return
-		}
-
-		content, err := retriever.Retrieve(id, rootDir)
-		if err != nil {
-			log.Printf("[ERROR] %s", err)
-			w.WriteHeader(500)
-			w.Write([]byte("internal server error"))
-			return
-		}
-
-		w.WriteHeader(200)
-		w.Write(content)
 	})
 
 	r.HandleFunc("/api/search", func(w http.ResponseWriter, r *http.Request) {

@@ -46,8 +46,8 @@ func (repo *FileRepository) Put(fileName string) (int64, error) {
 }
 
 type FileRow struct {
-	ID       int64
-	FileName string
+	ID       int64  `json:"id"`
+	FileName string `json:"file_name"`
 }
 
 func (repo *FileRepository) Single(id int64) (*FileRow, error) {
