@@ -5,7 +5,7 @@
     <form action="/api/files" method="POST" enctype="multipart/form-data">
       <div class="input-group">
         <div class="custom-file">
-          <input type="file" class="custom-file-input" id="file">
+          <input type="file" class="custom-file-input" id="file" name="file">
           <label class="custom-file-label" for="file">Choose file</label>
         </div>
         <div class="input-group-append">
