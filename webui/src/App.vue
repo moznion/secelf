@@ -13,20 +13,56 @@
         </div>
       </div>
     </form>
+
+    <form v-on:submit.prevent="search">
+      <div class="searchbox input-group mb-3">
+        <input type="text" class="form-control" v-model="searchQuery" placeholder="Query">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="submit">Search</button>
+        </div>
+      </div>
+    </form>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>File Name</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="file in files">
+          <td>{{ file.id }}</td>
+          <td>{{ file.file_name }}</td>
+          <td><a v-bind:href="'/files/' + file.id">Download</a></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script>
+import { APIClient } from './api_client.ts';
+
 export default {
   name: 'app',
   data() {
     return {
-      msg: 'Welcome to Your Vue.js App',
+      searchQuery: '',
+      files: [],
     };
   },
   methods: {
-    foo: function() {
-      this.msg = 'hih';
+    search: function() {
+      const self = this;
+      APIClient.search(this.searchQuery, (result, err) => {
+        if (err !== null) {
+          // TODO error handling
+          return;
+        }
+        self.files = result;
+      });
     },
   },
 };
@@ -38,6 +74,10 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin-top: 10px;
+}
+
+.searchbox {
+  margin-top: 30px;
 }
 
 h1,
