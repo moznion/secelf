@@ -3,6 +3,7 @@ package secelf
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -145,7 +146,7 @@ func Run(args []string) {
 		}
 
 		w.WriteHeader(201)
-		w.Write([]byte("ok"))
+		w.Write([]byte(fmt.Sprintf("created: %s", fileName)))
 	})
 
 	r.HandleFunc("/api/search", func(w http.ResponseWriter, r *http.Request) {
