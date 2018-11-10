@@ -14,7 +14,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/moznion/secelf/internal/drive"
-	"github.com/moznion/secelf/repository"
+	"github.com/moznion/secelf/internal/repository"
 )
 
 func Run(args []string) {

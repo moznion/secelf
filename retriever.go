@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/moznion/secelf/internal/drive"
-	"github.com/moznion/secelf/repository"
+	"github.com/moznion/secelf/internal/repository"
 )
 
 type Retriever struct {
