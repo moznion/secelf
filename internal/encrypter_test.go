@@ -1,4 +1,4 @@
-package secelf
+package internal
 
 import (
 	"testing"

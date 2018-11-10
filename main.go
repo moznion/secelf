@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/moznion/secelf/internal"
 	"github.com/moznion/secelf/internal/drive"
 	"github.com/moznion/secelf/internal/repository"
 )
@@ -49,7 +50,7 @@ func Run(args []string) {
 		log.Fatalf(`ENV[ROOT_DIR] is mandatory variable, however it is missing`)
 	}
 
-	enc, err := NewEncrypter([]byte(key))
+	enc, err := internal.NewEncrypter([]byte(key))
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -61,8 +62,8 @@ func Run(args []string) {
 
 	fileRepo := repository.NewFileRepository(dbPath)
 
-	register := NewRegistrar(enc, fileRepo, driveService)
-	retriever := NewRetriever(enc, fileRepo, driveService)
+	register := internal.NewRegistrar(enc, fileRepo, driveService)
+	retriever := internal.NewRetriever(enc, fileRepo, driveService)
 
 	r := mux.NewRouter()
 
