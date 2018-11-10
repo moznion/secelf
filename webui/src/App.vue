@@ -12,7 +12,7 @@
             <form action="/api/files" method="POST" enctype="multipart/form-data">
               <div class="input-group">
                 <div class="custom-file">
-                  <input type="file" class="custom-file-input" id="file" name="file">
+                  <input type="file" class="custom-file-input" id="file" name="file" />
                   <label class="custom-file-label" for="file">Choose file</label>
                 </div>
                 <div class="input-group-append">
@@ -27,7 +27,7 @@
 
     <form v-on:submit.prevent="search">
       <div class="searchbox input-group mb-3">
-        <input type="text" class="form-control" v-model="searchQuery" placeholder="Query">
+        <input type="text" class="form-control" v-model="searchQuery" placeholder="Query" />
         <div class="input-group-append">
           <button class="btn btn-outline-secondary" type="submit">Search</button>
         </div>
