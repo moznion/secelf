@@ -3,6 +3,7 @@ package secelf
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -19,35 +20,25 @@ import (
 )
 
 func Run(args []string) {
-	// TODO these should be extract to parameter?
-	credentialJSON := os.Getenv("CREDENTIAL_JSON")
-	if credentialJSON == "" {
-		log.Fatalf(`ENV[CREDENTIAL_JSON] is mandatory variable, however it is missing`)
-	}
+	var port int64
+	var credentialJSON string
+	var tokenJSON string
+	var key string
+	var rootDirID string
+	var sqliteDBPath string
 
-	tokenJSON := os.Getenv("TOKEN_JSON")
-	if tokenJSON == "" {
-		log.Fatalf(`ENV[TOKEN_JSON] is mandatory variable, however it is missing`)
-	}
+	flag.Int64Var(&port, "port", -1, "[mandatory] port for listen")
+	flag.StringVar(&credentialJSON, "credential-json", "", "[mandatory] credential of Google Drive as JSON string")
+	flag.StringVar(&tokenJSON, "token-json", "", "[mandatory] token for accessing to Google Drive as JSON string")
+	flag.StringVar(&key, "key", "", "[mandatory] key for file encryption")
+	flag.StringVar(&rootDirID, "root-dir-id", "", "[mandatory] identifier fo root directory for storing files")
+	flag.StringVar(&sqliteDBPath, "sqlite-db-path", "", "[mandatory] path to SQLite DB file")
+	flag.Parse()
 
-	parentDirID := os.Getenv("PARENT_DIR_ID")
-	if parentDirID == "" {
-		log.Fatalf(`ENV[PARENT_DIR_ID] is mandatory variable, however it is missing`)
-	}
-
-	key := os.Getenv("KEY")
-	if key == "" {
-		log.Fatalf(`ENV[KEY] is mandatory variable, however it is missing`)
-	}
-
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		log.Fatalf(`ENV[DB_PATH] is mandatory variable, however it is missing`)
-	}
-
-	rootDir := os.Getenv("ROOT_DIR")
-	if rootDir == "" {
-		log.Fatalf(`ENV[ROOT_DIR] is mandatory variable, however it is missing`)
+	if port < 0 || credentialJSON == "" || tokenJSON == "" || key == "" || rootDirID == "" || sqliteDBPath == "" {
+		fmt.Printf("[ERROR] mandatory parameter(s) is/are missing or invalid\n")
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	enc, err := internal.NewEncrypter([]byte(key))
@@ -60,7 +51,7 @@ func Run(args []string) {
 		log.Fatalf("%s", err)
 	}
 
-	fileRepo := repository.NewFileRepository(dbPath)
+	fileRepo := repository.NewFileRepository(sqliteDBPath)
 
 	register := internal.NewRegistrar(enc, fileRepo, driveService)
 	retriever := internal.NewRetriever(enc, fileRepo, driveService)
@@ -98,7 +89,7 @@ func Run(args []string) {
 			return
 		}
 
-		content, err := retriever.Retrieve(id, rootDir)
+		content, err := retriever.Retrieve(id, rootDirID)
 		if err != nil {
 			log.Printf("[ERROR] %s", err)
 			w.WriteHeader(500)
@@ -137,7 +128,7 @@ func Run(args []string) {
 
 		fileName := header.Filename
 
-		err = register.Register(rootDir, fileName, bin)
+		err = register.Register(rootDirID, fileName, bin)
 		if err != nil {
 			log.Printf("[ERROR] %s", err)
 			w.WriteHeader(500)
@@ -171,12 +162,13 @@ func Run(args []string) {
 		w.Write(result)
 	})
 
+	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "127.0.0.1:29292",
+		Addr:         addr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
+	log.Printf("server start: %s", addr)
 	log.Fatal(srv.ListenAndServe())
 }
