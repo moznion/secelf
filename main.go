@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/moznion/secelf/drive"
+	"github.com/moznion/secelf/internal/drive"
 	"github.com/moznion/secelf/repository"
 )
 

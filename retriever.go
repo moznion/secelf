@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/moznion/secelf/drive"
+	"github.com/moznion/secelf/internal/drive"
 	"github.com/moznion/secelf/repository"
 )
 
