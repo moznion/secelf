@@ -57,6 +57,8 @@ secelf \
 
 👍 then you can access the application as `127.0.0.1:8888`.
 
+![image](https://user-images.githubusercontent.com/1422834/48304468-478de180-e55d-11e8-8ee9-6d1e7aa0c570.png)
+
 Example of `token.json`:
 
 ```json
