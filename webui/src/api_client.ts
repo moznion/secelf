@@ -1,5 +1,5 @@
 export class APIClient {
-  static search(query: string, callback: (result: Array<any>, err: Error) => void): void {
+  static search(query: string, callback: (result: any[], err: Error) => void): void {
     const encodedQuery = encodeURI(query);
     fetch('/api/search?q=' + encodedQuery)
       .then(response => {
