@@ -30,7 +30,7 @@ func Run(args []string) {
 	flag.Int64Var(&port, "port", -1, "[mandatory] port for listen")
 	flag.StringVar(&credentialJSON, "credential-json", "", "[mandatory] credential of Google Drive as JSON string")
 	flag.StringVar(&tokenJSON, "token-json", "", "[mandatory] token for accessing to Google Drive as JSON string")
-	flag.StringVar(&key, "key", "", "[mandatory] key for file encryption")
+	flag.StringVar(&key, "key", "", "[mandatory] AES key for file encryption (must be 128bit, 192bit or 256bit)")
 	flag.StringVar(&rootDirID, "root-dir-id", "", "[mandatory] identifier fo root directory for storing files")
 	flag.StringVar(&sqliteDBPath, "sqlite-db-path", "", "[mandatory] path to SQLite DB file")
 	flag.Parse()
