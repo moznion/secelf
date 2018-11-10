@@ -2,17 +2,28 @@
   <div id="app">
     <h1>SECELF</h1>
 
-    <form action="/api/files" method="POST" enctype="multipart/form-data">
-      <div class="input-group">
-        <div class="custom-file">
-          <input type="file" class="custom-file-input" id="file" name="file">
-          <label class="custom-file-label" for="file">Choose file</label>
-        </div>
-        <div class="input-group-append">
-          <button class="btn btn-primary" type="submit">Upload</button>
-        </div>
-      </div>
-    </form>
+    <div role="tablist">
+      <b-card no-body class="mb-1">
+        <b-card-header header-tag="header" class="p-1" role="tab">
+          <a block href="#" v-b-toggle.upload-pane>▼ Upload</a>
+        </b-card-header>
+        <b-collapse id="upload-pane" accordion="upload-pane" role="tabpanel">
+          <b-card-body>
+            <form action="/api/files" method="POST" enctype="multipart/form-data">
+              <div class="input-group">
+                <div class="custom-file">
+                  <input type="file" class="custom-file-input" id="file" name="file">
+                  <label class="custom-file-label" for="file">Choose file</label>
+                </div>
+                <div class="input-group-append">
+                  <button class="btn btn-primary" type="submit">Upload</button>
+                </div>
+              </div>
+            </form>
+          </b-card-body>
+        </b-collapse>
+      </b-card>
+    </div>
 
     <form v-on:submit.prevent="search">
       <div class="searchbox input-group mb-3">
@@ -77,7 +88,7 @@ export default {
 }
 
 .searchbox {
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 h1,
