@@ -29,10 +29,14 @@ How to run
 
 ```
 Usage of secelf
+  -basic-auth-pswd string
+        user password for BASIC authentication
+  -basic-auth-user string
+        user name for BASIC authentication
   -credential-json string
         [mandatory] credential of Google Drive as JSON string
   -key string
-        [mandatory] key for file encryption (must be 128bit, 192bit or 256bit)
+        [mandatory] AES key for file encryption (must be 128bit, 192bit or 256bit)
   -port int
         [mandatory] port for listen (default -1)
   -root-dir-id string
@@ -70,6 +74,10 @@ Example of `credentials.json`:
 ```json
 {"installed":{"client_id":"your-client-id","project_id":"your-project-id","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://www.googleapis.com/oauth2/v3/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"your-client-secret","redirect_uris":["urn:ietf:wg:oauth:2.0:oob"]}}
 ```
+
+### How to enable BASIC authentication
+
+Please pass `--basic-auth-user` and `--basic-auth-pswd` parameter via command line option; then the application enables BASIC authentication.
 
 License
 --

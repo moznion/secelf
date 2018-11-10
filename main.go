@@ -3,6 +3,7 @@ package secelf
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -26,6 +27,8 @@ func Run(args []string) {
 	var key string
 	var rootDirID string
 	var sqliteDBPath string
+	var basicAuthUser string
+	var basicAuthPSWD string
 
 	flag.Int64Var(&port, "port", -1, "[mandatory] port for listen")
 	flag.StringVar(&credentialJSON, "credential-json", "", "[mandatory] credential of Google Drive as JSON string")
@@ -33,12 +36,33 @@ func Run(args []string) {
 	flag.StringVar(&key, "key", "", "[mandatory] AES key for file encryption (must be 128bit, 192bit or 256bit)")
 	flag.StringVar(&rootDirID, "root-dir-id", "", "[mandatory] identifier fo root directory for storing files")
 	flag.StringVar(&sqliteDBPath, "sqlite-db-path", "", "[mandatory] path to SQLite DB file")
+	flag.StringVar(&basicAuthUser, "basic-auth-user", "", "user name for BASIC authentication")
+	flag.StringVar(&basicAuthPSWD, "basic-auth-pswd", "", "user password for BASIC authentication")
 	flag.Parse()
 
 	if port < 0 || credentialJSON == "" || tokenJSON == "" || key == "" || rootDirID == "" || sqliteDBPath == "" {
 		fmt.Printf("[ERROR] mandatory parameter(s) is/are missing or invalid\n")
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	authenticate := func(w http.ResponseWriter, r *http.Request) error {
+		return nil
+	}
+	if basicAuthUser != "" && basicAuthPSWD != "" {
+		log.Printf("enable basic auth")
+		authenticate = func(w http.ResponseWriter, r *http.Request) error {
+			username, password, ok := r.BasicAuth()
+			if !ok || username != basicAuthUser || password != basicAuthPSWD {
+				w.Header().Set("WWW-Authenticate", `Basic realm="SECELF"`)
+				w.WriteHeader(401)
+				w.Write([]byte("unauthorized"))
+				return errors.New("forbidden")
+			}
+			return nil
+		}
+	} else {
+		log.Printf("not enable basic auth")
 	}
 
 	driveService, err := drive.NewService([]byte(credentialJSON), []byte(tokenJSON))
@@ -60,6 +84,10 @@ func Run(args []string) {
 			return
 		}
 
+		if authenticate(w, r) != nil {
+			return
+		}
+
 		tmpl := template.Must(template.ParseFiles("./webui/index.html"))
 		if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
 			log.Printf("[ERROR] %s", err)
@@ -73,6 +101,10 @@ func Run(args []string) {
 		if r.Method != "GET" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		if authenticate(w, r) != nil {
 			return
 		}
 
@@ -97,6 +129,9 @@ func Run(args []string) {
 	})
 
 	r.HandleFunc("/webui/dist/{file}", func(w http.ResponseWriter, r *http.Request) {
+		if authenticate(w, r) != nil {
+			return
+		}
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 
@@ -104,6 +139,10 @@ func Run(args []string) {
 		if r.Method != "POST" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		if authenticate(w, r) != nil {
 			return
 		}
 
@@ -139,6 +178,10 @@ func Run(args []string) {
 		if r.Method != "GET" {
 			w.WriteHeader(405)
 			w.Write([]byte("method not allowed"))
+			return
+		}
+
+		if authenticate(w, r) != nil {
 			return
 		}
 
