@@ -12,10 +12,15 @@ type Service struct {
 	driveClient *gdrive.Service
 }
 
-func NewService(driveClient *gdrive.Service) *Service {
+func NewService(credentialJSON []byte, tokenJSON []byte) (*Service, error) {
+	driveClient, err := makeDriveClient(credentialJSON, tokenJSON)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Service{
 		driveClient: driveClient,
-	}
+	}, nil
 }
 
 func (s *Service) Put(rootDir, fileName string, content []byte) error {

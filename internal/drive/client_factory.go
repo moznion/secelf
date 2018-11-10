@@ -10,7 +10,7 @@ import (
 	gdrive "google.golang.org/api/drive/v3"
 )
 
-func MakeDriveClient(credentialJSON []byte, tokenJSON []byte) (*gdrive.Service, error) {
+func makeDriveClient(credentialJSON []byte, tokenJSON []byte) (*gdrive.Service, error) {
 	config, err := google.ConfigFromJSON(credentialJSON, gdrive.DriveScope)
 	if err != nil {
 		return nil, err

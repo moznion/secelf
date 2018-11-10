@@ -54,11 +54,10 @@ func Run(args []string) {
 		log.Fatalf("%s", err)
 	}
 
-	driveClient, err := drive.MakeDriveClient([]byte(credentialJSON), []byte(tokenJSON))
+	driveService, err := drive.NewService([]byte(credentialJSON), []byte(tokenJSON))
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	driveService := drive.NewService(driveClient)
 
 	fileRepo := repository.NewFileRepository(dbPath)
 
