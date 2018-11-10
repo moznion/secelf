@@ -85,6 +85,8 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin-top: 10px;
+  margin-left: 5%;
+  margin-right: 5%;
 }
 
 .searchbox {
