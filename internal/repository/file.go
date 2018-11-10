@@ -19,20 +19,20 @@ func NewFileRepository(dbPath string) *FileRepository {
 	}
 }
 
-func (repo *FileRepository) Put(fileName string) (int64, error) {
+func (repo *FileRepository) Put(fileName, salt string) (int64, error) {
 	db, err := sql.Open("sqlite3", repo.dbPath)
 	if err != nil {
 		return -1, err
 	}
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("INSERT INTO %s (file_name) VALUES (?)", fileTableName))
+	stmt, err := db.Prepare(fmt.Sprintf("INSERT INTO %s (file_name, salt) VALUES (?, ?)", fileTableName))
 	if err != nil {
 		return -1, err
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(fileName)
+	res, err := stmt.Exec(fileName, salt)
 	if err != nil {
 		return -1, err
 	}
@@ -48,6 +48,7 @@ func (repo *FileRepository) Put(fileName string) (int64, error) {
 type FileRow struct {
 	ID       int64  `json:"id"`
 	FileName string `json:"file_name"`
+	Salt     string `json:"salt"`
 }
 
 func (repo *FileRepository) Single(id int64) (*FileRow, error) {
@@ -57,14 +58,15 @@ func (repo *FileRepository) Single(id int64) (*FileRow, error) {
 	}
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("SELECT file_name FROM %s WHERE id = ?", fileTableName))
+	stmt, err := db.Prepare(fmt.Sprintf("SELECT file_name, salt FROM %s WHERE id = ?", fileTableName))
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
 	var fileName string
-	err = stmt.QueryRow(id).Scan(&fileName)
+	var salt string
+	err = stmt.QueryRow(id).Scan(&fileName, &salt)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +74,7 @@ func (repo *FileRepository) Single(id int64) (*FileRow, error) {
 	return &FileRow{
 		ID:       id,
 		FileName: fileName,
+		Salt:     salt,
 	}, nil
 }
 

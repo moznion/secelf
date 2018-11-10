@@ -12,7 +12,7 @@ import (
 const dbPath = "test.sqlite3"
 
 func TestPutShouldSuccessfully(t *testing.T) {
-	scheme, _ := ioutil.ReadFile("../sql/000-file.sql")
+	scheme, _ := ioutil.ReadFile("../../sql/000-file.sql")
 	db, _ := sql.Open("sqlite3", dbPath)
 	defer os.Remove(dbPath)
 	db.Exec(string(scheme))
@@ -20,9 +20,9 @@ func TestPutShouldSuccessfully(t *testing.T) {
 
 	repo := NewFileRepository(dbPath)
 
-	id, err := repo.Put("test")
+	id, err := repo.Put("test", "salt")
 	if err != nil {
-		t.Errorf("got unexpected error")
+		t.Errorf("got unexpected error: %s", err)
 	}
 	if id <= 0 {
 		t.Errorf("cannot get id certainly")
@@ -30,7 +30,7 @@ func TestPutShouldSuccessfully(t *testing.T) {
 }
 
 func TestSearchSuccessfully(t *testing.T) {
-	scheme, _ := ioutil.ReadFile("../sql/000-file.sql")
+	scheme, _ := ioutil.ReadFile("../../sql/000-file.sql")
 	db, _ := sql.Open("sqlite3", dbPath)
 	defer os.Remove(dbPath)
 	db.Exec(string(scheme))
@@ -38,9 +38,9 @@ func TestSearchSuccessfully(t *testing.T) {
 
 	repo := NewFileRepository(dbPath)
 
-	repo.Put("foo")
-	repo.Put("bar")
-	repo.Put("foobar")
+	repo.Put("foo", "salt1")
+	repo.Put("bar", "salt2")
+	repo.Put("foobar", "salt3")
 
 	results, err := repo.Search("foo")
 	if len(results) < 2 {
@@ -74,7 +74,7 @@ func TestSearchSuccessfully(t *testing.T) {
 }
 
 func TestSingleSuccessfully(t *testing.T) {
-	scheme, _ := ioutil.ReadFile("../sql/000-file.sql")
+	scheme, _ := ioutil.ReadFile("../../sql/000-file.sql")
 	db, _ := sql.Open("sqlite3", dbPath)
 	defer os.Remove(dbPath)
 	db.Exec(string(scheme))
@@ -82,9 +82,9 @@ func TestSingleSuccessfully(t *testing.T) {
 
 	repo := NewFileRepository(dbPath)
 
-	id1, _ := repo.Put("foo")
-	id2, _ := repo.Put("bar")
-	id3, _ := repo.Put("foobar")
+	id1, _ := repo.Put("foo", "salt1")
+	id2, _ := repo.Put("bar", "salt2")
+	id3, _ := repo.Put("foobar", "salt3")
 
 	row, err := repo.Single(id1)
 	if err != nil {

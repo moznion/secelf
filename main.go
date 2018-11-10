@@ -41,11 +41,6 @@ func Run(args []string) {
 		os.Exit(1)
 	}
 
-	enc, err := internal.NewEncrypter([]byte(key))
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-
 	driveService, err := drive.NewService([]byte(credentialJSON), []byte(tokenJSON))
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -53,8 +48,8 @@ func Run(args []string) {
 
 	fileRepo := repository.NewFileRepository(sqliteDBPath)
 
-	register := internal.NewRegistrar(enc, fileRepo, driveService)
-	retriever := internal.NewRetriever(enc, fileRepo, driveService)
+	register := internal.NewRegistrar(key, fileRepo, driveService)
+	retriever := internal.NewRetriever(key, fileRepo, driveService)
 
 	r := mux.NewRouter()
 
