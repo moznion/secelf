@@ -3,7 +3,6 @@ package secelf
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -17,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/moznion/secelf/internal"
 	"github.com/moznion/secelf/internal/drive"
+	"github.com/moznion/secelf/internal/framework"
 	"github.com/moznion/secelf/internal/repository"
 )
 
@@ -46,20 +46,14 @@ func Run(args []string) {
 		os.Exit(1)
 	}
 
-	authenticate := func(w http.ResponseWriter, r *http.Request) error {
-		return nil
+	authenticate := func(r *http.Request) bool {
+		return true
 	}
 	if basicAuthUser != "" && basicAuthPSWD != "" {
 		log.Printf("enable basic auth")
-		authenticate = func(w http.ResponseWriter, r *http.Request) error {
+		authenticate = func(r *http.Request) bool {
 			username, password, ok := r.BasicAuth()
-			if !ok || username != basicAuthUser || password != basicAuthPSWD {
-				w.Header().Set("WWW-Authenticate", `Basic realm="SECELF"`)
-				w.WriteHeader(401)
-				w.Write([]byte("unauthorized"))
-				return errors.New("forbidden")
-			}
-			return nil
+			return !ok || username != basicAuthUser || password != basicAuthPSWD
 		}
 	} else {
 		log.Printf("not enable basic auth")
@@ -71,133 +65,92 @@ func Run(args []string) {
 	}
 
 	fileRepo := repository.NewFileRepository(sqliteDBPath)
-
 	register := internal.NewRegistrar(key, fileRepo, driveService)
 	retriever := internal.NewRetriever(key, fileRepo, driveService)
 
 	r := mux.NewRouter()
+	framework.RegisterWithAuth(r, authenticate, func(dispatcher *framework.Dispatcher) {
+		dispatcher.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			tmpl := template.Must(template.ParseFiles("./webui/index.html"))
+			if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
+				log.Printf("[ERROR] %s", err)
+				w.WriteHeader(500)
+				w.Write([]byte("internal server error"))
+				return
+			}
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			w.WriteHeader(405)
-			w.Write([]byte("method not allowed"))
-			return
-		}
+			w.WriteHeader(200)
+		})
 
-		if authenticate(w, r) != nil {
-			return
-		}
+		dispatcher.Get("/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+			vars := mux.Vars(r)
+			id, err := strconv.ParseInt(vars["id"], 10, 64)
+			if err != nil {
+				w.WriteHeader(400)
+				w.Write([]byte("bad request"))
+				return
+			}
 
-		tmpl := template.Must(template.ParseFiles("./webui/index.html"))
-		if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
-			log.Printf("[ERROR] %s", err)
-			w.WriteHeader(500)
-			w.Write([]byte("internal server error"))
-			return
-		}
-	})
+			content, err := retriever.Retrieve(id, rootDirID)
+			if err != nil {
+				log.Printf("[ERROR] %s", err)
+				w.WriteHeader(500)
+				w.Write([]byte("internal server error"))
+				return
+			}
 
-	r.HandleFunc("/files/{id:[0-9]+}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			w.WriteHeader(405)
-			w.Write([]byte("method not allowed"))
-			return
-		}
+			w.WriteHeader(200)
+			w.Write(content)
+		})
 
-		if authenticate(w, r) != nil {
-			return
-		}
+		dispatcher.Get("/webui/dist/{file}", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, r.URL.Path[1:])
+		})
 
-		vars := mux.Vars(r)
-		id, err := strconv.ParseInt(vars["id"], 10, 64)
-		if err != nil {
-			w.WriteHeader(400)
-			w.Write([]byte("bad request"))
-			return
-		}
+		dispatcher.Post("/api/files", func(w http.ResponseWriter, r *http.Request) {
+			file, header, err := r.FormFile("file")
+			if err != nil {
+				log.Printf("[ERROR] %s", err)
+				w.WriteHeader(400)
+				w.Write([]byte("invalid request"))
+				return
+			}
 
-		content, err := retriever.Retrieve(id, rootDirID)
-		if err != nil {
-			log.Printf("[ERROR] %s", err)
-			w.WriteHeader(500)
-			w.Write([]byte("internal server error"))
-			return
-		}
+			defer file.Close()
 
-		w.WriteHeader(200)
-		w.Write(content)
-	})
+			buf := new(bytes.Buffer)
+			io.Copy(buf, file)
+			bin := buf.Bytes()
 
-	r.HandleFunc("/webui/dist/{file}", func(w http.ResponseWriter, r *http.Request) {
-		if authenticate(w, r) != nil {
-			return
-		}
-		http.ServeFile(w, r, r.URL.Path[1:])
-	})
+			fileName := header.Filename
 
-	r.HandleFunc("/api/files", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.WriteHeader(405)
-			w.Write([]byte("method not allowed"))
-			return
-		}
+			err = register.Register(rootDirID, fileName, bin)
+			if err != nil {
+				log.Printf("[ERROR] %s", err)
+				w.WriteHeader(500)
+				w.Write([]byte("internal server error"))
+				return
+			}
 
-		if authenticate(w, r) != nil {
-			return
-		}
+			w.WriteHeader(201)
+			w.Write([]byte(fmt.Sprintf("created: %s", fileName)))
+		})
 
-		file, header, err := r.FormFile("file")
-		if err != nil {
-			log.Printf("[ERROR] %s", err)
-			w.WriteHeader(400)
-			w.Write([]byte("invalid request"))
-			return
-		}
+		dispatcher.Get("/api/search", func(w http.ResponseWriter, r *http.Request) {
+			q := r.URL.Query().Get("q")
+			records, err := fileRepo.Search(q)
+			if err != nil {
+				log.Printf("[ERROR] %s", err)
+				w.WriteHeader(500)
+				w.Write([]byte("internal server error"))
+				return
+			}
 
-		defer file.Close()
+			result, _ := json.Marshal(records)
 
-		buf := new(bytes.Buffer)
-		io.Copy(buf, file)
-		bin := buf.Bytes()
-
-		fileName := header.Filename
-
-		err = register.Register(rootDirID, fileName, bin)
-		if err != nil {
-			log.Printf("[ERROR] %s", err)
-			w.WriteHeader(500)
-			w.Write([]byte("internal server error"))
-			return
-		}
-
-		w.WriteHeader(201)
-		w.Write([]byte(fmt.Sprintf("created: %s", fileName)))
-	})
-
-	r.HandleFunc("/api/search", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			w.WriteHeader(405)
-			w.Write([]byte("method not allowed"))
-			return
-		}
-
-		if authenticate(w, r) != nil {
-			return
-		}
-
-		q := r.URL.Query().Get("q")
-		records, err := fileRepo.Search(q)
-		if err != nil {
-			log.Printf("[ERROR] %s", err)
-			w.WriteHeader(500)
-			w.Write([]byte("internal server error"))
-			return
-		}
-
-		result, _ := json.Marshal(records)
-
-		w.WriteHeader(200)
-		w.Write(result)
+			w.WriteHeader(200)
+			w.Write(result)
+		})
 	})
 
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
