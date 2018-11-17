@@ -6,7 +6,10 @@ import (
 
 func TestGenerateSalt(t *testing.T) {
 	l := 32
-	salt := generateSalt(l)
+	salt, err := generateSalt(l)
+	if err != nil {
+		t.Fatalf("unexpected err has got [err=%s]", err)
+	}
 	if len(salt) != l {
 		t.Errorf("unexpected salt has come [got=%s]", salt)
 	}

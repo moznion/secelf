@@ -1,18 +1,23 @@
 package internal
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 )
 
 var saltLetters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 var saltLettersLen = len(saltLetters)
 
-func generateSalt(length int) string {
+func generateSalt(length int) (string, error) {
 	buff := make([]rune, length)
 	for i := range buff {
-		buff[i] = saltLetters[rand.Intn(saltLettersLen)]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(saltLettersLen)))
+		if err != nil {
+			return "", err
+		}
+		buff[i] = saltLetters[n.Sign()]
 	}
-	return string(buff)
+	return string(buff), nil
 }
 
 func mixKeyAndSalt(masterKey, salt string) []byte {

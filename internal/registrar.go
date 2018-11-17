@@ -23,7 +23,10 @@ func NewRegistrar(key string, fileRepo *repository.FileRepository, driveService 
 }
 
 func (r *Registrar) Register(rootDir, fileName string, bin []byte) error {
-	salt := generateSalt(len(r.key))
+	salt, err := generateSalt(len(r.key))
+	if err != nil {
+		return err
+	}
 
 	id, err := r.fileRepo.Put(fileName, salt)
 	if err != nil {
