@@ -9,26 +9,35 @@ import (
 )
 
 type Registrar struct {
-	key          string
+	kek          []byte
 	driveService *drive.Service
 	fileRepo     *repository.FileRepository
 }
 
-func NewRegistrar(key string, fileRepo *repository.FileRepository, driveService *drive.Service) *Registrar {
+func NewRegistrar(key []byte, fileRepo *repository.FileRepository, driveService *drive.Service) *Registrar {
 	return &Registrar{
-		key:          key,
+		kek:          key,
 		driveService: driveService,
 		fileRepo:     fileRepo,
 	}
 }
 
 func (r *Registrar) Register(rootDir, fileName string, bin []byte) error {
-	salt, err := generateSalt(len(r.key))
+	cek, err := generateContentsKey()
 	if err != nil {
 		return err
 	}
 
-	id, err := r.fileRepo.Put(fileName, salt)
+	contentsKeyEncrypter, err := NewEncrypter(r.kek)
+	if err != nil {
+		return err
+	}
+	encryptedCek, err := contentsKeyEncrypter.EncryptBin(cek)
+	if err != nil {
+		return err
+	}
+
+	id, err := r.fileRepo.Put(fileName, encryptedCek)
 	if err != nil {
 		return err
 	}
@@ -36,7 +45,7 @@ func (r *Registrar) Register(rootDir, fileName string, bin []byte) error {
 	extension := filepath.Ext(fileName)
 	masqueradeFileName := fmt.Sprintf("%d%s", id, extension)
 
-	enc, err := NewEncrypter(mixKeyAndSalt(r.key, salt))
+	enc, err := NewEncrypter(cek)
 	if err != nil {
 		return err
 	}

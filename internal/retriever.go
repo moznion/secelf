@@ -9,14 +9,14 @@ import (
 )
 
 type Retriever struct {
-	key          string
+	kek          []byte
 	driveService *drive.Service
 	fileRepo     *repository.FileRepository
 }
 
-func NewRetriever(key string, fileRepo *repository.FileRepository, driveService *drive.Service) *Retriever {
+func NewRetriever(key []byte, fileRepo *repository.FileRepository, driveService *drive.Service) *Retriever {
 	return &Retriever{
-		key:          key,
+		kek:          key,
 		driveService: driveService,
 		fileRepo:     fileRepo,
 	}
@@ -28,7 +28,6 @@ func (r *Retriever) Retrieve(id int64, rootDir string) ([]byte, error) {
 		return nil, err
 	}
 
-	// TODO
 	actualFileName := file.FileName
 	masqueradeFileName := fmt.Sprintf("%d%s", id, filepath.Ext(actualFileName))
 
@@ -37,7 +36,13 @@ func (r *Retriever) Retrieve(id int64, rootDir string) ([]byte, error) {
 		return nil, err
 	}
 
-	enc, err := NewEncrypter(mixKeyAndSalt(r.key, file.Salt))
+	contentsKeyEncrypter, err := NewEncrypter(r.kek)
+	if err != nil {
+		return nil, err
+	}
+	cek := contentsKeyEncrypter.DecryptBin(file.EncryptedCek)
+
+	enc, err := NewEncrypter(cek)
 	if err != nil {
 		return nil, err
 	}

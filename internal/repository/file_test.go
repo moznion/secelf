@@ -20,7 +20,7 @@ func TestPutShouldSuccessfully(t *testing.T) {
 
 	repo := NewFileRepository(dbPath)
 
-	id, err := repo.Put("test", "salt")
+	id, err := repo.Put("test", []byte("cek"))
 	if err != nil {
 		t.Errorf("got unexpected error: %s", err)
 	}
@@ -38,9 +38,9 @@ func TestSearchSuccessfully(t *testing.T) {
 
 	repo := NewFileRepository(dbPath)
 
-	repo.Put("foo", "salt1")
-	repo.Put("bar", "salt2")
-	repo.Put("foobar", "salt3")
+	repo.Put("foo", []byte("cek1"))
+	repo.Put("bar", []byte("cek2"))
+	repo.Put("foobar", []byte("cek3"))
 
 	results, err := repo.Search("foo")
 	if len(results) < 2 {
@@ -82,9 +82,9 @@ func TestSingleSuccessfully(t *testing.T) {
 
 	repo := NewFileRepository(dbPath)
 
-	id1, _ := repo.Put("foo", "salt1")
-	id2, _ := repo.Put("bar", "salt2")
-	id3, _ := repo.Put("foobar", "salt3")
+	id1, _ := repo.Put("foo", []byte("cek1"))
+	id2, _ := repo.Put("bar", []byte("cek2"))
+	id3, _ := repo.Put("foobar", []byte("cek3"))
 
 	row, err := repo.Single(id1)
 	if err != nil {

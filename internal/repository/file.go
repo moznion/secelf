@@ -20,20 +20,20 @@ func NewFileRepository(dbPath string) *FileRepository {
 	}
 }
 
-func (repo *FileRepository) Put(fileName, salt string) (int64, error) {
+func (repo *FileRepository) Put(fileName string, encryptedCek []byte) (int64, error) {
 	db, err := sql.Open("sqlite3", repo.dbPath)
 	if err != nil {
 		return -1, err
 	}
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("INSERT INTO %s (file_name, salt) VALUES (?, ?)", fileTableName))
+	stmt, err := db.Prepare(fmt.Sprintf("INSERT INTO %s (file_name, encrypted_cek) VALUES (?, ?)", fileTableName))
 	if err != nil {
 		return -1, err
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(fileName, salt)
+	res, err := stmt.Exec(fileName, encryptedCek)
 	if err != nil {
 		return -1, err
 	}
@@ -47,9 +47,9 @@ func (repo *FileRepository) Put(fileName, salt string) (int64, error) {
 }
 
 type FileRow struct {
-	ID       int64  `json:"id"`
-	FileName string `json:"file_name"`
-	Salt     string `json:"salt"`
+	ID           int64  `json:"id"`
+	FileName     string `json:"file_name"`
+	EncryptedCek []byte `json:"encrypted_cek"`
 }
 
 func (repo *FileRepository) Single(id int64) (*FileRow, error) {
@@ -59,23 +59,23 @@ func (repo *FileRepository) Single(id int64) (*FileRow, error) {
 	}
 	defer db.Close()
 
-	stmt, err := db.Prepare(fmt.Sprintf("SELECT file_name, salt FROM %s WHERE id = ?", fileTableName))
+	stmt, err := db.Prepare(fmt.Sprintf("SELECT file_name, encrypted_cek FROM %s WHERE id = ?", fileTableName))
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
 	var fileName string
-	var salt string
-	err = stmt.QueryRow(id).Scan(&fileName, &salt)
+	var encryptedCek []byte
+	err = stmt.QueryRow(id).Scan(&fileName, &encryptedCek)
 	if err != nil {
 		return nil, err
 	}
 
 	return &FileRow{
-		ID:       id,
-		FileName: fileName,
-		Salt:     salt,
+		ID:           id,
+		FileName:     fileName,
+		EncryptedCek: encryptedCek,
 	}, nil
 }
 
