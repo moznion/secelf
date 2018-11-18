@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 
@@ -55,5 +56,23 @@ func (r *Registrar) Register(rootDir, fileName string, bin []byte) error {
 		return err
 	}
 
-	return r.driveService.Put(rootDir, masqueradeFileName, encrypted)
+	err = r.driveService.Put(rootDir, masqueradeFileName, encrypted)
+	if err != nil {
+		return err
+	}
+
+	return r.verifyUpload(rootDir, masqueradeFileName, id, encrypted)
+}
+
+func (r *Registrar) verifyUpload(rootDir, masqueradeFileName string, id int64, encrypted []byte) error {
+	got, err := r.driveService.Get(rootDir, masqueradeFileName)
+	if err != nil {
+		return err
+	}
+
+	if bytes.Compare(got, encrypted) != 0 {
+		return fmt.Errorf("failed upload: verifycation is not passed [id=%d]", id)
+	}
+
+	return nil
 }
