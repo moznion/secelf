@@ -3,6 +3,9 @@ PKGS := $(shell go list ./...)
 
 check: test lint vet fmt-check
 
+build:
+	go build cmd/secelf/secelf.go
+
 test:
 	go test -v -cover ./...
 
