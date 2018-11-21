@@ -23,9 +23,9 @@ func NewService(credentialJSON []byte, tokenJSON []byte) (*Service, error) {
 	}, nil
 }
 
-func (s *Service) Put(rootDir, fileName string, content []byte) error {
+func (s *Service) Put(rootDir, filename string, content []byte) error {
 	file := &gdrive.File{
-		Name:    fileName,
+		Name:    filename,
 		Parents: []string{rootDir},
 	}
 
@@ -33,15 +33,20 @@ func (s *Service) Put(rootDir, fileName string, content []byte) error {
 	return err
 }
 
-func (s *Service) Get(rootDir, fileName string) ([]byte, error) {
-	fileList, err := s.driveClient.Files.List().Fields("nextPageToken, files(id)").Q(fmt.Sprintf("'%s' in parents", rootDir)).Do()
+func (s *Service) Get(rootDir, filename string) ([]byte, error) {
+	req := s.driveClient.Files.List().Fields("nextPageToken, files(id)").Q(fmt.Sprintf("'%s' = name", filename))
+	if rootDir != "" {
+		req = req.Q(fmt.Sprintf("'%s' in parents", rootDir))
+	}
+
+	fileList, err := req.Do()
 	if err != nil {
 		return nil, err
 	}
 
 	files := fileList.Files
 	if len(files) <= 0 {
-		return nil, fmt.Errorf("not found [rootDir=%s, fileName=%s]", rootDir, fileName)
+		return nil, fmt.Errorf("not found [rootDir=%s, filename=%s]", rootDir, filename)
 	}
 
 	resp, err := s.driveClient.Files.Get(files[0].Id).Download()
