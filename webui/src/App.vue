@@ -45,7 +45,7 @@
       <tbody>
         <tr v-for="file in files">
           <td>{{ file.id }}</td>
-          <td>{{ file.file_name }}</td>
+          <td>{{ file.filename }}</td>
           <td><a v-bind:href="'/files/' + file.id">Download</a></td>
         </tr>
       </tbody>

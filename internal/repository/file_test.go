@@ -49,7 +49,7 @@ func TestSearchSuccessfully(t *testing.T) {
 	if err != nil {
 		t.Errorf("got unexpected error")
 	}
-	if results[0].FileName != "foobar" || results[1].FileName != "foo" {
+	if results[0].Filename != "foobar" || results[1].Filename != "foo" {
 		t.Errorf("result and/or order is wrong")
 	}
 
@@ -60,7 +60,7 @@ func TestSearchSuccessfully(t *testing.T) {
 	if err != nil {
 		t.Errorf("got unexpected error")
 	}
-	if results[0].FileName != "foobar" || results[1].FileName != "bar" {
+	if results[0].Filename != "foobar" || results[1].Filename != "bar" {
 		t.Errorf("result and/or order is wrong")
 	}
 
@@ -90,24 +90,24 @@ func TestSingleSuccessfully(t *testing.T) {
 	if err != nil {
 		t.Errorf("got unexpected error")
 	}
-	if row.FileName != "foo" {
-		t.Errorf("unexpected result [got:%s, expected:%s]", row.FileName, "foo")
+	if row.Filename != "foo" {
+		t.Errorf("unexpected result [got:%s, expected:%s]", row.Filename, "foo")
 	}
 
 	row, err = repo.Single(id2)
 	if err != nil {
 		t.Errorf("got unexpected error")
 	}
-	if row.FileName != "bar" {
-		t.Errorf("unexpected result [got:%s, expected:%s]", row.FileName, "bar")
+	if row.Filename != "bar" {
+		t.Errorf("unexpected result [got:%s, expected:%s]", row.Filename, "bar")
 	}
 
 	row, err = repo.Single(id3)
 	if err != nil {
 		t.Errorf("got unexpected error")
 	}
-	if row.FileName != "foobar" {
-		t.Errorf("unexpected result [got:%s, expected:%s]", row.FileName, "foobar")
+	if row.Filename != "foobar" {
+		t.Errorf("unexpected result [got:%s, expected:%s]", row.Filename, "foobar")
 	}
 
 	row, err = repo.Single(0)

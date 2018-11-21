@@ -124,9 +124,9 @@ func Run(args []string) {
 			io.Copy(buf, file)
 			bin := buf.Bytes()
 
-			fileName := header.Filename
+			filename := header.Filename
 
-			err = register.Register(rootDirID, fileName, bin)
+			err = register.Register(rootDirID, filename, bin)
 			if err != nil {
 				log.Printf("[ERROR] %s", err)
 				w.WriteHeader(500)
@@ -135,7 +135,7 @@ func Run(args []string) {
 			}
 
 			w.WriteHeader(201)
-			w.Write([]byte(fmt.Sprintf("created: %s", fileName)))
+			w.Write([]byte(fmt.Sprintf("created: %s", filename)))
 		})
 
 		dispatcher.Get("/api/search", func(w http.ResponseWriter, r *http.Request) {

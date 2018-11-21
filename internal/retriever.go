@@ -28,10 +28,10 @@ func (r *Retriever) Retrieve(id int64, rootDir string) ([]byte, error) {
 		return nil, err
 	}
 
-	actualFileName := file.FileName
-	masqueradeFileName := fmt.Sprintf("%d%s", id, filepath.Ext(actualFileName))
+	actualFilename := file.Filename
+	masqueradeFilename := fmt.Sprintf("%d%s", id, filepath.Ext(actualFilename))
 
-	encrypted, err := r.driveService.Get(rootDir, masqueradeFileName)
+	encrypted, err := r.driveService.Get(rootDir, masqueradeFilename)
 	if err != nil {
 		return nil, err
 	}
