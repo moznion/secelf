@@ -34,22 +34,12 @@ func (s *Service) Put(rootDir, filename string, content []byte) error {
 }
 
 func (s *Service) Get(rootDir, filename string) ([]byte, error) {
-	req := s.driveClient.Files.List().Fields("nextPageToken, files(id)").Q(fmt.Sprintf("'%s' = name", filename))
-	if rootDir != "" {
-		req = req.Q(fmt.Sprintf("'%s' in parents", rootDir))
-	}
-
-	fileList, err := req.Do()
+	fileID, err := s.getFileID(rootDir, filename)
 	if err != nil {
 		return nil, err
 	}
 
-	files := fileList.Files
-	if len(files) <= 0 {
-		return nil, fmt.Errorf("not found [rootDir=%s, filename=%s]", rootDir, filename)
-	}
-
-	resp, err := s.driveClient.Files.Get(files[0].Id).Download()
+	resp, err := s.driveClient.Files.Get(fileID).Download()
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +51,23 @@ func (s *Service) Get(rootDir, filename string) ([]byte, error) {
 	}
 
 	return bin, nil
+}
+
+func (s *Service) getFileID(rootDir, filename string) (string, error) {
+	req := s.driveClient.Files.List().Fields("nextPageToken, files(id)").Q(fmt.Sprintf("'%s' = name", filename))
+	if rootDir != "" {
+		req = req.Q(fmt.Sprintf("'%s' in parents", rootDir))
+	}
+
+	fileList, err := req.Do()
+	if err != nil {
+		return "", err
+	}
+
+	files := fileList.Files
+	if len(files) <= 0 {
+		return "", fmt.Errorf("not found [rootDir=%s, filename=%s]", rootDir, filename)
+	}
+
+	return files[0].Id, nil
 }
