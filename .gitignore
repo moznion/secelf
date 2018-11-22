@@ -1,5 +1,9 @@
+.idea/
 vendor/
 credentials.json
 token.json
-test.sqlite3
+*.sqlite3
 node_modules/
+secelf
+take_backup
+restore_backup
