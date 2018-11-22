@@ -5,6 +5,8 @@ check: test lint vet fmt-check
 
 build:
 	go build cmd/secelf/secelf.go
+	go build cmd/backup/restore/restore_backup.go
+	go build cmd/backup/taker/take_backup.go
 
 test:
 	go test -v -cover ./...
